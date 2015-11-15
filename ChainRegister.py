@@ -11,9 +11,10 @@ class ChainRegister:
         :return: hash of transaction
         '''
         self.key = token
+        self.salt = salt
 
     def register_purchase(self, data):
-        return embed_data(to_embed=data, api_key=self.key, data_is_hex=False)
+        return embed_data(to_embed=data + self.salt, api_key=self.key, data_is_hex=False)
 
 
 # print(get_transaction_details('9e200a1dbd89392abb429978e7c569d8a76f74195c15fa04d62666f7f6bbaa74'))
