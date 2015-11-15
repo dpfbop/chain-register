@@ -23,7 +23,7 @@ def register_purchase(id, amount, price):
 def get_transactions():
     num_salt = register.salt_to_num()
     txs = list(transactions.find({'salt': register.salt}))
-    return '<br>'.join(map(ChainRegister.decode_hash, txs))
+    return '<br>'.join([ChainRegister.decode_hash(hash) for hash in txs])
 
 if __name__ == "__main__":
     app.debug = True
