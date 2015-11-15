@@ -19,9 +19,9 @@ class ChainRegister:
 
     def register_purchase(self, id, amount, price):
         numSalt = self.salt_to_num
-        n1 = str((id ^ numSalt).decode('hex'))
-        n2 = str((amount ^ numSalt).decode('hex'))
-        n3 = str((price ^ numSalt).decode('hex'))
+        n1 = str((int(id) ^ numSalt).decode('hex'))
+        n2 = str((int(amount) ^ numSalt).decode('hex'))
+        n3 = str((int(price) ^ numSalt).decode('hex'))
         data = 'bbbb' + n1 + 'bb' + n2 + 'bb' + n3
         print(data)
         return embed_data(to_embed=data, api_key=self.key, data_is_hex=False)

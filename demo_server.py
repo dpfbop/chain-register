@@ -13,7 +13,7 @@ transactions = db.transactions
 def hello():
     return '<a href="/purchase/coffeemachine"> <button> Купить </button> </a>'
 
-@app.route("/register_purchase/<int:id>/<int:amount>/<int:price>")
+@app.route("/register_purchase/<id>/<amount>/<price>")
 def register_purchase(id, amount, price):
     tx_hash = register.register_purchase(id, amount, price)
     transactions.insert({'hash': tx_hash, 'salt': register.salt})
