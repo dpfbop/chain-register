@@ -12,8 +12,11 @@ transactions = db.transactions
 def hello():
     return '<a href="/purchase/coffeemachine"> <button> Купить </button> </a>'
 
-@app.route("/register_purchase/<id>/<amount>/<price>")
-def register_purchase(id, amount, price):
+@app.route("/register_purchase/")
+def register_purchase():
+    id = request.args.get('id', '')
+    amount = request.args.get('amount', '')
+    price = request.args.get('price', '')
     tx_hash = register.register_purchase(id, amount, price)
     transactions.insert({'hash': tx_hash, 'salt': register.salt})
     return str(tx_hash)
