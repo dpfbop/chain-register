@@ -47,9 +47,14 @@ class ChainRegister:
                 return x['data_string'], transaction['received']
 
     def get_transaction(self, tx_hash):
+        print(tx_hash)
         data, mTime = self.get_data_from_tx(tx_hash)
         record = self.decode_hash(data)
         return {'id': record[0],
                          'amount': record[1],
                                    'price': record[2],
                                             'date': mTime.strftime('%c')}
+
+    def get_page_with_transactions(self, txs):
+        return {'transactions': [self.get_transaction(tx['hash']) for tx in txs]}
+

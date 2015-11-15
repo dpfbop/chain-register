@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 from ChainRegister import ChainRegister
 from pymongo import MongoClient
 
@@ -7,6 +7,7 @@ register = ChainRegister()
 mongoclient = MongoClient() 
 db = mongoclient.chainregister_database
 transactions = db.transactions
+db.drop_collection(transactions)
 
 @app.route("/")
 def hello():
@@ -25,7 +26,7 @@ def register_purchase():
 def get_transactions(salt):
     num_salt = register.salt_to_num()
     txs = list(transactions.find({'salt': salt}))
-    return '<br>'.join([str(register.get_transaction(hash['hash'])) for hash in txs])
+    return str(register.get_page_with_transactions(txs))
 
 if __name__ == "__main__":
     app.debug = True
