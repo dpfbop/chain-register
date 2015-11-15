@@ -13,7 +13,7 @@ transactions = db.transactions
 def hello():
     return '<a href="/purchase/coffeemachine"> <button> Купить </button> </a>'
 
-@app.route("/register_purchase/<int:id>/<int:amount>/<int:price>"
+@app.route("/register_purchase/<int:id>/<int:amount>/<int:price>")
 def register_purchase(id, amount, price):
     tx_hash = register.register_purchase(id, amount, price)
     transactions.insert({'hash': tx_hash, 'salt': register.salt})
@@ -23,7 +23,7 @@ def register_purchase(id, amount, price):
 def get_transactions():
     num_salt = register.salt_to_num()
     txs = list(transactions.find({'salt': register.salt}))
-    return '<br>'.join([ChainRegister.decode_hash(hash) for hash in txs])
+    return '<br>'.join([register.decode_hash(hash) for hash in txs])
 
 if __name__ == "__main__":
     app.debug = True
