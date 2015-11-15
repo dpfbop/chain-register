@@ -22,8 +22,9 @@ def register_purchase():
     transactions.insert({'hash': tx_hash, 'salt': register.salt})
     return str(tx_hash)
     
-@app.route("/get_transactions/<salt>")
-def get_transactions(salt):
+@app.route("/get_transactions/")
+def get_transactions():
+    salt = requests.args.get('salt', '')
     num_salt = register.salt_to_num()
     txs = list(transactions.find({'salt': salt}))
     return str(register.get_page_with_transactions(txs))
