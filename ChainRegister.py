@@ -1,4 +1,5 @@
 from blockcypher import embed_data
+from hashlib import sha256
 from blockcypher import get_transaction_details
 
 
@@ -14,7 +15,9 @@ class ChainRegister:
         self.salt = salt
 
     def register_purchase(self, data):
-        return embed_data(to_embed=data + self.salt, api_key=self.key, data_is_hex=False)
+        print(sha256((data + self.salt).encode("utf-8")).hexdigest())
+        print(len(sha256((data + self.salt).encode("utf-8")).hexdigest()))
+        return embed_data(to_embed="bbbb" + sha256((data + self.salt).encode("utf-8")).hexdigest(), api_key=self.key, data_is_hex=True)
 
 
 # print(get_transaction_details('9e200a1dbd89392abb429978e7c569d8a76f74195c15fa04d62666f7f6bbaa74'))
