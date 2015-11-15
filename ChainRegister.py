@@ -1,7 +1,7 @@
 from blockcypher import embed_data
 from hashlib import sha256, md5
 from blockcypher import get_transaction_details
-
+import datetime
 
 class ChainRegister:
 
@@ -15,20 +15,21 @@ class ChainRegister:
         self.salt = salt
 
     def salt_to_num(self):
-        return int(md5(self.salt.encode("urf-8")).hexdigest()) % 10**9
+        return int(md5(self.salt.encode("utf-8")).hexdigest(), 16) % 10**9
 
     def register_purchase(self, id, amount, price):
-        numSalt = self.salt_to_num
-        n1 = str((int(id) ^ numSalt).decode('hex'))
-        n2 = str((int(amount) ^ numSalt).decode('hex'))
-        n3 = str((int(price) ^ numSalt).decode('hex'))
+        numSalt = self.salt_to_num()
+        n1 = str(hex(int(id) ^ numSalt))
+        n2 = str(hex(int(amount) ^ numSalt))
+        n3 = str(hex(int(price) ^ numSalt))
         data = 'bbbb' + n1 + 'bb' + n2 + 'bb' + n3
-        print(data)
-        return embed_data(to_embed=data, api_key=self.key, data_is_hex=False)
+        return embed_data(to_embed=data, api_key=self.key, data_is_hex=False)['hash']
 
-    def decode_hash(self, hash):
-        data = hash[4:]
+    def decode_hash(self, mHash):
+        print(mHash)
+        data = mHash[4:]
         nums = data.split('bb')
+        print(nums)
         if len(nums) != 3:
             return -1
         numSalt = self.salt_to_num()
@@ -37,5 +38,18 @@ class ChainRegister:
         price = int(nums[2], 16) ^ numSalt
         return id, amount, price
 
+    def get_data_from_tx(self, txs):
+        print(txs)
+        transaction = get_transaction_details(txs)
+        for x in transaction['outputs']:
+            if x['script_type'] == 'null-data':
+                print(x)
+                return x['data_string'], transaction['received']
 
-# print(get_transaction_details('9e200a1dbd89392abb429978e7c569d8a76f74195c15fa04d62666f7f6bbaa74'))
+    def get_transaction(self, tx_hash):
+        data, mTime = self.get_data_from_tx(tx_hash)
+        record = self.decode_hash(data)
+        return {'id': record[0],
+                         'amount': record[1],
+                                   'price': record[2],
+                                            'date': mTime.strftime('%c')}
