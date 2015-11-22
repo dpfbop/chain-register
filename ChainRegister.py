@@ -1,11 +1,10 @@
 from blockcypher import embed_data
-from hashlib import sha256, md5
+from hashlib import md5
 from blockcypher import get_transaction_details
-import datetime
+
 
 class ChainRegister:
-
-    def __init__(self, salt="hack4people", token="478e16e4aeee8e5aa9e5c9a1f6c978fe"):
+    def __init__(self, salt, token="478e16e4aeee8e5aa9e5c9a1f6c978fe"):
         '''
         :param salt: secret word
         :param key: API key for blockcypher
@@ -22,13 +21,12 @@ class ChainRegister:
         n1 = str(hex(int(id) ^ numSalt))
         n2 = str(hex(int(amount) ^ numSalt))
         n3 = str(hex(int(price) ^ numSalt))
-        data = 'bbbb' + n1 + 'bb' + n2 + 'bb' + n3
+        data = n1 + 'bbbb' + n2 + 'bbbb' + n3
         return embed_data(to_embed=data, api_key=self.key, data_is_hex=False)['hash']
 
     def decode_hash(self, mHash):
         print(mHash)
-        data = mHash[4:]
-        nums = data.split('bb')
+        nums = mHash.split('bbbb')
         print(nums)
         if len(nums) != 3:
             return -1
@@ -50,11 +48,12 @@ class ChainRegister:
         print(tx_hash)
         data, mTime = self.get_data_from_tx(tx_hash)
         record = self.decode_hash(data)
-        return {'id': record[0],
+        return {'product_id': record[0],
                          'amount': record[1],
                                    'price': record[2],
                                             'date': mTime.strftime('%c')}
 
     def get_page_with_transactions(self, txs):
-        return {'transactions': [self.get_transaction(tx['hash']) for tx in txs]}
+        transactions = [self.get_transaction(tx['hash']) for tx in txs]
+        return {'count': len(transactions), 'transactions': transactions}
 
