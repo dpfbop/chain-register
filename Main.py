@@ -2,7 +2,7 @@ from Server import Server
 from flask import request
 import db
 
-TIMEOUT = 10  # Create new block every TIMEOUT seconds
+TIMEOUT = 5  # Create new block every TIMEOUT seconds
 server = Server(TIMEOUT)
 
 if __name__ == "__main__":

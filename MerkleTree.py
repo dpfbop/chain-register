@@ -9,7 +9,14 @@ class MerkleTree(object):
     def calc_root_hash(self): 
         if len(self.hashes) == 0:
             return None
-        hashes_on_level = [bytes(bytearray.fromhex(hash)) for hash in self.hashes]
+
+        hashes_on_level = []
+        for _hash in self.hashes:
+            _hash = b"\x00" + bytes(bytearray.fromhex(_hash))
+            _hash = sha256(_hash)
+            _hash = bytes(bytearray.fromhex(_hash.hexdigest()))
+            hashes_on_level.append(_hash)
+
         while len(hashes_on_level) > 1:
             n = len(hashes_on_level)
             new_hashes_on_level = []
@@ -22,4 +29,4 @@ class MerkleTree(object):
                 new_hashes_on_level.append(new_hash)
             hashes_on_level = new_hashes_on_level
         root_hash = hashes_on_level[0]
-        return binascii.hexlify(root_hash)
+        return binascii.hexlify(root_hash).decode("utf-8") 
