@@ -1,39 +1,32 @@
-from flask import Flask, request
+from flask import Flask
 from ChainRegister import ChainRegister
-from pymongo import MongoClient
-from datetime import datetime
-import json
+from threading import Lock, Thread
+from time import sleep
+import db
 
 
-app = Flask(__name__)
-register = ChainRegister("hack4people")
-mongo = MongoClient()
-db = mongo.chainregister_database
-transactions = db.transactions
-blocks = db.blocks
+class Server(object):
+    def __init__(self, timeout):
+        self.timeout = timeout
+        self._app = Flask(__name__)
+        self.register = ChainRegister()
 
+    def create_app(self):
+        def run_register():
+            # Thread with register
+            while True:
+                sleep(self.timeout)
+                with Lock():
+                    new_block_id, txs_hashes = db.get_txs_for_new_block()
+                    self.register.register_block(new_block_id, txs_hashes)
 
-@app.route("/register_purchase/")
-def register_purchase():
-    id = request.args.get('shop_id', '')
-    hash = request.args.get('hash', '')
-    now = datetime.utcnow()
-    transactions.insert({'shop_id': id, 'hash': hash, "block": -1,
-                              "date": now})
-    return json.dumps({'transaction': {'shop_id': id, 'hash': hash,
-                                       'block': -1, 'date': now.isoformat()}})
+        def run_flask():
+            # Thread with Flask
+            self._app.debug = False  # Flask can't work in thread in debug mode
+            self._app.run(host='0.0.0.0')
 
-
-@app.route("/get_undelivered/")
-def get_undelivered_txs():
-    result = []
-    for tx in transactions.find({"block": -1}):
-        tx["date"] = tx['date'].isoformat()
-        del tx["_id"]
-        result.append(tx)
-    return json.dumps(result)
-
-if __name__ == "__main__":
-    app.debug = True
-    app.run(host='0.0.0.0')
-
+        register_thread = Thread(target=run_register)
+        flask_thread = Thread(target=run_flask)
+        register_thread.start()
+        flask_thread.start()
+        return self._app

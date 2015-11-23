@@ -1,14 +1,10 @@
-from blockcypher import embed_data
-from hashlib import sha256, md5
-from blockcypher import get_transaction_details
-import datetime
+from hashlib import sha256
 import binascii
 
-class MerkleTree(object):
 
+class MerkleTree(object):
     def __init__(self, hashes=[]):   
         self.hashes = hashes
-
 
     def calc_root_hash(self): 
         if len(self.hashes) == 0:
@@ -27,4 +23,3 @@ class MerkleTree(object):
             hashes_on_level = new_hashes_on_level
         root_hash = hashes_on_level[0]
         return binascii.hexlify(root_hash)
-
