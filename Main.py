@@ -16,3 +16,12 @@ def register_purchase():
     m_hash = request.args.get('hash', '')
     db.save_tx(shop_id, m_hash)
     return "OK"
+
+@app.route("/get_block/")
+def get_block():
+    hash = request.args.get('hash', '')
+    block = db.get_block_by_tx_hash(hash)
+    if block is None:
+        return "No block"
+    return block
+

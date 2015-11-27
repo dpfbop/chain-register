@@ -18,6 +18,7 @@ class Server(object):
                 sleep(self.timeout)
                 with Lock():
                     new_block_id, txs_hashes = db.get_txs_for_new_block()
+                    # print(txs_hashes)
                     self.register.register_block(new_block_id, txs_hashes)
 
         def run_flask():
