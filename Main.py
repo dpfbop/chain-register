@@ -26,3 +26,9 @@ def get_block():
         return "No block"
     return block
 
+
+@app.teardown_appcontext
+def close_connection(exception):
+    if db.db is not None:
+        db.db.close()
+
