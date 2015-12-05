@@ -1,9 +1,9 @@
 from Server import Server
 from flask import request
+from Configs import Configs
 import db
 
-TIMEOUT = 5  # Create new block every TIMEOUT seconds
-server = Server(TIMEOUT)
+server = Server(Configs.timeout)
 
 if __name__ == "__main__":
     app = server.create_app()
@@ -16,6 +16,7 @@ def register_purchase():
     m_hash = request.args.get('hash', '')
     db.save_tx(shop_id, m_hash)
     return "OK"
+
 
 @app.route("/get_block/")
 def get_block():

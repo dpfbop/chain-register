@@ -23,7 +23,6 @@ class ChainRegister(object):
         finally:
             return blockchain_tx_hash
 
-
     @staticmethod
     def get_data_from_tx(txs):
         transaction = get_transaction_details(txs)
