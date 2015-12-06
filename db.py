@@ -18,15 +18,18 @@ def __init_db():
         cursor.execute("CREATE DATABASE IF NOT EXISTS " + Configs.db_name)
         cursor.execute("USE " + Configs.db_name)
         __query = "CREATE TABLE IF NOT EXISTS " + __transactions + "(" +\
+                  "id INT UNSIGNED, " +\
                   __shop_id + " INT UNSIGNED, " +\
                   __hash + " CHAR(64), " +\
                   __block_id + " INT UNSIGNED, " +\
-                  __date + " TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP);"
+                  __date + " TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +\
+                  "PRIMARY KEY (id));"
         cursor.execute(__query)
         __query = "CREATE TABLE IF NOT EXISTS " + __blocks + "(" +\
                   __block_id + " INT UNSIGNED, " +\
                   __root_hash + " CHAR(64), " +\
-                  __blockchain_tx_hash + " CHAR(64));"
+                  __blockchain_tx_hash + " CHAR(64), " \
+                  "PRIMARY KEY (" + __block_id + ");"
 
         cursor.execute(__query)
         __query = "CREATE TABLE IF NOT EXISTS " + __settings + "(last_block_id INT UNSIGNED);"
