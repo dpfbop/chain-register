@@ -9,7 +9,7 @@ def __init_vars():
         cursor.execute("SELECT last_block_id, last_tx_id FROM " + __settings + ";")
         entry = cursor.fetchone()
         if entry is None:
-            return -1
+            return -1, -1
         return entry[0], entry[1]
 
 
@@ -104,7 +104,7 @@ def save_block(block_id, root_hash, blockchain_tx_hash, txs):
 def get_block_by_tx_hash(tx_hash):
     # TODO: check
     with closing(db.cursor()) as cursor:
-        cursor.execute("SELECT {0} FROM {1} WHERE {2} = {3};", __block_id, __transactions, __hash, tx_hash)
+        cursor.execute("SELECT {0} FROM {1} WHERE {2} = {3};".format(__block_id, __transactions, __hash, tx_hash))
         tx = cursor.fetchone()
         if tx is None:
             return None
