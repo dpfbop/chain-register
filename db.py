@@ -74,10 +74,7 @@ def __set_last_block_id(val):
         global __last_block_id
         if val < __last_block_id:
             raise ValueError("val should be more than" + str(__last_block_id))
-        if __last_block_id == -1:
-            cursor.execute("INSERT INTO " + __settings + " VALUES (" + str(val) + ");")
-        else:
-            cursor.execute("UPDATE " + __settings + " SET last_block_id = " + str(val) + ";")
+        cursor.execute("UPDATE " + __settings + " SET value = " + str(val) + " WHERE key = last_block_id;")
         __last_block_id = val
 
 
