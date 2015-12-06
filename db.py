@@ -35,8 +35,12 @@ def __init_db():
                   "PRIMARY KEY (" + __block_id + ");"
         cursor.execute(__query)
         
-        __query = "CREATE TABLE IF NOT EXISTS {} (last_block_id INT UNSIGNED, last_tx_id INT UNSIGNED);".format(__settings)
+        __query = "CREATE TABLE IF NOT EXISTS {} (key CHAR(64), value INT UNSIGNED);".format(__settings)
         cursor.execute(__query)
+        cursor.execute("INSERT IGNORE INTO {} VALUES (last_block_id, 0);".format(__transactions))
+        cursor.execute("INSERT IGNORE INTO {} VALUES (last_tx_id, 0);".format(__transactions))
+
+
 
 # transactions
 __shop_id = "shop_id"
