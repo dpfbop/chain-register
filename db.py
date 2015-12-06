@@ -25,14 +25,17 @@ def __init_db():
                   __date + " TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +\
                   "PRIMARY KEY (id));"
         cursor.execute(__query)
+        __query = "ALTER TABLE {} ADD INDEX ({})".format(__transactions, __block_id)
+        cursor.execute(__query)
+
         __query = "CREATE TABLE IF NOT EXISTS " + __blocks + "(" +\
                   __block_id + " INT UNSIGNED, " +\
                   __root_hash + " CHAR(64), " +\
                   __blockchain_tx_hash + " CHAR(64), " \
                   "PRIMARY KEY (" + __block_id + ");"
-
         cursor.execute(__query)
-        __query = "CREATE TABLE IF NOT EXISTS " + __settings + "(last_block_id INT UNSIGNED);"
+        
+        __query = "CREATE TABLE IF NOT EXISTS {} (last_block_id INT UNSIGNED, last_tx_id INT UNSIGNED);".format(__settings)
         cursor.execute(__query)
 
 # transactions
