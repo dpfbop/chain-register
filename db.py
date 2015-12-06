@@ -3,14 +3,14 @@ from contextlib import closing
 from Configs import Configs
 
 
-def __init_last_block_id():
+def __init_vars():
     # TODO: check
     with closing(db.cursor()) as cursor:
-        cursor.execute("SELECT last_block_id FROM " + __settings + ";")
+        cursor.execute("SELECT last_block_id, last_tx_id FROM " + __settings + ";")
         entry = cursor.fetchone()
         if entry is None:
             return -1
-        return entry["last_block_id"]
+        return entry[0], entry[1]
 
 
 def __init_db():
@@ -55,7 +55,7 @@ db = MySQLdb.connect(user=Configs.user, passwd=Configs.password)
 # create tables if necessary
 __init_db()
 # init last block id from db
-__last_block_id = __init_last_block_id()
+__last_block_id, __last_tx_id = __init_vars()
 
 
 def __get_block(block_id):
@@ -104,8 +104,7 @@ def save_block(block_id, root_hash, blockchain_tx_hash, txs):
 def get_block_by_tx_hash(tx_hash):
     # TODO: check
     with closing(db.cursor()) as cursor:
-        cursor.execute("SELECT " + __block_id + " FROM " + __transactions +
-                       " WHERE " + __hash + " = " + tx_hash + ";")
+        cursor.execute("SELECT {0} FROM {1} WHERE {2} = {3};", __block_id, __transactions, __hash, tx_hash)
         tx = cursor.fetchone()
         if tx is None:
             return None
