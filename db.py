@@ -37,6 +37,7 @@ def __init_db():
         
         __query = "CREATE TABLE IF NOT EXISTS {} (key CHAR(64), value INT UNSIGNED);".format(__settings)
         cursor.execute(__query)
+        # TODO: There are default values right in create request
         cursor.execute("INSERT IGNORE INTO {} VALUES (last_block_id, 0);".format(__transactions))
         cursor.execute("INSERT IGNORE INTO {} VALUES (last_tx_id, 0);".format(__transactions))
 
