@@ -22,13 +22,7 @@ def register_purchase():
 def get_block():
     hash = request.args.get('hash', '')
     block = db.get_block_by_tx_hash(hash)
+    print("block = ", block)
     if block is None:
         return "No block"
-    return block
-
-
-@app.teardown_appcontext
-def close_connection(exception):
-    if db.db is not None:
-        db.db.close()
-
+    return str(block)

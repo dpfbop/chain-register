@@ -4,21 +4,28 @@ from Configs import Configs
 
 
 def __init_vars():
-    # TODO: check
     with closing(db.cursor()) as cursor:
-        cursor.execute("SELECT key, value FROM " + __settings + ";")
+        cursor.execute("SELECT {}, {} FROM {} ;".format(__settings_key, __settings_value, __settings))
         entry = []
         for row in cursor:
             entry.append(row[1])
+        if len(entry) == 0:
+            return -1, -1
         return entry[0], entry[1]
 
 
 def __init_db():
+    global __last_block_id, __last_tx_id
     with closing(db.cursor()) as cursor:
+        try:
+            cursor.execute("USE " + Configs.db_name)
+            return
+        except:
+            pass
         cursor.execute("CREATE DATABASE IF NOT EXISTS " + Configs.db_name)
         cursor.execute("USE " + Configs.db_name)
         __query = "CREATE TABLE IF NOT EXISTS " + __transactions + "(" +\
-                  "id INT UNSIGNED, " +\
+                  "id INT UNSIGNED NOT NULL AUTO_INCREMENT, " +\
                   __shop_id + " INT UNSIGNED, " +\
                   __hash + " CHAR(64), " +\
                   __block_id + " INT UNSIGNED, " +\
@@ -27,18 +34,20 @@ def __init_db():
         cursor.execute(__query)
         __query = "ALTER TABLE {} ADD INDEX ({})".format(__transactions, __block_id)
         cursor.execute(__query)
-
-        __query = "CREATE TABLE IF NOT EXISTS " + __blocks + "(" +\
+        __query = "CREATE TABLE IF NOT EXISTS " + __blocks + " (" +\
                   __block_id + " INT UNSIGNED, " +\
                   __root_hash + " CHAR(64), " +\
                   __blockchain_tx_hash + " CHAR(64), " \
-                  "PRIMARY KEY (" + __block_id + ");"
+                  "PRIMARY KEY (" + __block_id + "));"
         cursor.execute(__query)
-        
-        __query = "CREATE TABLE IF NOT EXISTS {} (key CHAR(64), value INT UNSIGNED);".format(__settings)
+        __query = "CREATE TABLE IF NOT EXISTS {} ({} CHAR(64), {} INT UNSIGNED);".format(__settings, __settings_key, __settings_value)
         cursor.execute(__query)
-        cursor.execute("INSERT IGNORE INTO {} VALUES (last_block_id, 0);".format(__transactions))
-        cursor.execute("INSERT IGNORE INTO {} VALUES (last_tx_id, 0);".format(__transactions))
+        __query = "ALTER TABLE {} ADD UNIQUE ({})".format(__settings, __settings_key)
+        cursor.execute(__query)
+        cursor.execute("INSERT IGNORE INTO {} VALUES ('last_block_id', 0);".format(__settings))
+        cursor.execute("INSERT IGNORE INTO {} VALUES ('last_tx_id', 0);".format(__settings))
+        db.commit()
+        __last_block_id, __last_tx_id = __init_vars()
 
 
 # transactions
@@ -46,6 +55,8 @@ __shop_id = "shop_id"
 __block_id = "block_id"
 __hash = "hash"
 __date = "date"
+__settings_key = "mKey"
+__settings_value = "mValue"
 # blocks
 __root_hash = "root_hash"
 __blockchain_tx_hash = "blockchain_tx_hash"
@@ -62,7 +73,6 @@ __last_block_id, __last_tx_id = __init_vars()
 
 
 def __get_block(block_id):
-    # TODO: check
     with closing(db.cursor()) as cursor:
         cursor.execute("SELECT " + __root_hash + "," +
                        __blockchain_tx_hash + " FROM " + __blocks +
@@ -72,54 +82,90 @@ def __get_block(block_id):
 
 
 def __set_last_block_id(val):
-    # TODO: check
     with closing(db.cursor()) as cursor:
         global __last_block_id
         if val < __last_block_id:
             raise ValueError("val should be more than" + str(__last_block_id))
-        cursor.execute("UPDATE " + __settings + " SET value = " + str(val) + " WHERE key = last_block_id;")
+        __query = "UPDATE {} SET {} =  {} WHERE {} = '{}';".format(
+            __settings,
+            __settings_value,
+            val,
+            __settings_key,
+            "last_block_id")
+        cursor.execute(__query)
         __last_block_id = val
+        db.commit()
+
+
+def __set_last_tx_id(val):
+    with closing(db.cursor()) as cursor:
+        global __last_tx_id
+        if val < __last_tx_id:
+            raise ValueError("val should be more than" + str(__last_tx_id))
+        cursor.execute("UPDATE {} SET {} =  {} WHERE {} = '{}';".format(
+            __settings,
+            __settings_value,
+            val,
+            __settings_key,
+            "last_tx_id"))
+        __last_tx_id = val
+        db.commit()
 
 
 def save_tx(shop_id, _hash):
-    # TODO: check
     with closing(db.cursor()) as cursor:
-        cursor.execute("INSERT INTO " + __transactions + " VALUES (" +
-                       str(shop_id) + ", " + _hash + ", -1);")
+        __query = "INSERT INTO {} ({}, {}) VALUES ({}, '{}');".format(__transactions, __shop_id, __hash, str(shop_id), _hash)
+        cursor.execute(__query)
+        db.commit()
 
 
 def get_txs_for_new_block():
     with closing(db.cursor()) as cursor:
         cursor.execute("SELECT id, {} FROM {} WHERE id > {} ;".format(__hash, __transactions, __last_tx_id))
         hashes = []
-        for row in cursor: 
+        t = cursor.fetchall()
+        for row in t:
             hashes.append(row)
     return __last_block_id + 1, hashes
 
 
 def save_block(block_id, root_hash, blockchain_tx_hash, txs):
-    # TODO: check
     with closing(db.cursor()) as cursor:
-        cursor.execute("UPDATE {} SET value = {} WHERE {} >= {} AND {} <= {};".format(
-            __transactions, 
-            __block_id, 
-            "id", 
-            txs[0][0], 
+        __query = "UPDATE {} SET {} = {} WHERE {} >= {} AND {} <= {};".format(
+            __transactions,
+            __block_id,
+            block_id,
             "id",
-            txs[-1][0]))
-
+            txs[0][0],
+            "id",
+            txs[-1][0])
+        cursor.execute(__query)
         __set_last_block_id(block_id)
-        cursor.execute("INSERT INTO " + __blocks + " VALUES (" +
-                       block_id, ", " + root_hash + ", " + blockchain_tx_hash + ");")
-
-
+        __set_last_tx_id(txs[-1][0])
+        __query = "INSERT INTO {} ({}, {}, {}) VALUES ({},'{}','{}');".format(
+            __blocks,
+            __block_id,
+            __root_hash,
+            __blockchain_tx_hash,
+            block_id,
+            root_hash,
+            blockchain_tx_hash
+        )
+        cursor.execute(__query)
+        db.commit()
 
 
 def get_block_by_tx_hash(tx_hash):
-    # TODO: check
     with closing(db.cursor()) as cursor:
-        cursor.execute("SELECT {0} FROM {1} WHERE {2} = {3};".format(__block_id, __transactions, __hash, tx_hash))
+        __query = "SELECT {0} FROM {1} WHERE {2} = '{3}';".format(
+            __block_id,
+            __transactions,
+            __hash,
+            tx_hash)
+        print(__query)
+        cursor.execute(__query)
         tx = cursor.fetchone()
         if tx is None:
             return None
+        print(__get_block(tx[0]))
         return __get_block(tx[0])

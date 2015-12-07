@@ -18,8 +18,8 @@ class ChainRegister(object):
         try:
             blockchain_tx_hash = embed_data(to_embed=root_hash, api_key=self.key)['hash']
             db.save_block(new_block_id, root_hash, blockchain_tx_hash, txs_hashes)
-        except:
-            print("Connection Error")
+        except Exception as e:
+            print(e)
         finally:
             return blockchain_tx_hash
 

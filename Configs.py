@@ -4,4 +4,4 @@ class Configs:
     password = ""
     db_name = "dev_lucidcloud"
     # Create new block every TIMEOUT seconds
-    timeout = 5
+    timeout = 2
