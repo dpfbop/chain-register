@@ -89,16 +89,30 @@ def save_tx(shop_id, _hash):
 
 
 def get_txs_for_new_block():
-    
-    return
+    with closing(db.cursor()) as cursor:
+        cursor.execute("SELECT id, {} FROM {} WHERE id > {} ;".format(__hash, __transactions, __last_tx_id))
+        hashes = []
+        for row in cursor: 
+            hashes.append(row)
+    return __last_block_id + 1, hashes
 
 
 def save_block(block_id, root_hash, blockchain_tx_hash, txs):
     # TODO: check
     with closing(db.cursor()) as cursor:
+        cursor.execute("UPDATE {} SET value = {} WHERE {} >= {} AND {} <= {};".format(
+            __transactions, 
+            __block_id, 
+            "id", 
+            txs[0][0], 
+            "id",
+            txs[-1][0]))
+
         __set_last_block_id(block_id)
         cursor.execute("INSERT INTO " + __blocks + " VALUES (" +
                        block_id, ", " + root_hash + ", " + blockchain_tx_hash + ");")
+
+
 
 
 def get_block_by_tx_hash(tx_hash):

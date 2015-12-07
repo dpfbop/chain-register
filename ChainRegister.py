@@ -12,7 +12,7 @@ class ChainRegister(object):
         # saving root_hash in blockchain
         if len(txs_hashes) == 0:
             return None
-        tree = MerkleTree(txs_hashes)
+        tree = MerkleTree([hash[1] for hash in txs_hashes])
         root_hash = tree.calc_root_hash()
         blockchain_tx_hash = None
         try:
