@@ -6,10 +6,10 @@ from Configs import Configs
 def __init_vars():
     # TODO: check
     with closing(db.cursor()) as cursor:
-        cursor.execute("SELECT last_block_id, last_tx_id FROM " + __settings + ";")
-        entry = cursor.fetchone()
-        if entry is None:
-            return -1, -1
+        cursor.execute("SELECT key, value FROM " + __settings + ";")
+        entry = []
+        for row in cursor:
+            entry.append(row[1])
         return entry[0], entry[1]
 
 
@@ -37,10 +37,8 @@ def __init_db():
         
         __query = "CREATE TABLE IF NOT EXISTS {} (key CHAR(64), value INT UNSIGNED);".format(__settings)
         cursor.execute(__query)
-        # TODO: There are default values right in create request
         cursor.execute("INSERT IGNORE INTO {} VALUES (last_block_id, 0);".format(__transactions))
         cursor.execute("INSERT IGNORE INTO {} VALUES (last_tx_id, 0);".format(__transactions))
-
 
 
 # transactions
@@ -91,7 +89,7 @@ def save_tx(shop_id, _hash):
 
 
 def get_txs_for_new_block():
-    # TODO: need to rewrite!!!
+    
     return
 
 
