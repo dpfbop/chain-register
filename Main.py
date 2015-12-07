@@ -22,7 +22,6 @@ def register_purchase():
 def get_block():
     hash = request.args.get('hash', '')
     block = db.get_block_by_tx_hash(hash)
-    print("block = ", block)
     if block is None:
         return "No block"
     return str(block)

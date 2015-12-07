@@ -162,10 +162,8 @@ def get_block_by_tx_hash(tx_hash):
             __transactions,
             __hash,
             tx_hash)
-        print(__query)
         cursor.execute(__query)
         tx = cursor.fetchone()
         if tx is None:
             return None
-        print(__get_block(tx[0]))
         return __get_block(tx[0])
