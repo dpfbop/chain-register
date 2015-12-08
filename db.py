@@ -22,16 +22,24 @@ def __init_db():
     global __last_block_id, __last_tx_id
     with closing(db.cursor()) as cursor:
         # check if database already exists
-        __query = "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '{}'".format(
+        __query = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '{}'".format(
             Configs.db_name
         )
         cursor.execute(__query)
-        if cursor.fetchone() is not None:
+        if cursor.fetchone()[0] == 0:
+            # create database
+            cursor.execute("CREATE DATABASE IF NOT EXISTS " + Configs.db_name)
+        # select necessary database
+        cursor.execute("USE " + Configs.db_name)
+        # check if table already exists
+        __query = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '{}' AND TABLE_NAME = '{}'".format(
+            Configs.db_name,
+            __transactions
+        )
+        cursor.execute(__query)
+        if cursor.fetchone()[0] == 1:
             cursor.execute("USE " + Configs.db_name)
             return
-        # create database
-        cursor.execute("CREATE DATABASE IF NOT EXISTS " + Configs.db_name)
-        cursor.execute("USE " + Configs.db_name)
         # create table 'transactions'
         __query = "CREATE TABLE IF NOT EXISTS " + __transactions + "(" +\
                   "id INT UNSIGNED NOT NULL AUTO_INCREMENT, " +\
