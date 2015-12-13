@@ -4,9 +4,7 @@ from Configs import Configs
 import db
 
 server = Server(Configs.timeout)
-
-if __name__ == "__main__":
-    app = server.create_app()
+app = server.create_app()
 
 
 # API calls
