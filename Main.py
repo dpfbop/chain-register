@@ -1,12 +1,10 @@
 #!/usr/bin/env python
-from Server import Server
-from flask import request
-from Configs import Configs
+from flask import Flask, request
 import db
 import re
+import json
 
-server = Server(Configs.timeout)
-app = server.create_app()
+app = Flask(__name__)
 
 
 # API calls
@@ -14,18 +12,27 @@ app = server.create_app()
 def register_purchase():
     shop_id = request.args.get('shop_id', '')
     m_hash = request.args.get('hash', '')
-    valid = re.compile("^[A-F0-9]{16}$|^[A-F0-9]{32}$|^[A-F0-9]{64}$")
-    if valid.match(m_hash) is not None:
+    valid_hash = re.compile("^[A-F0-9]{16}$|^[A-F0-9]{32}$|^[A-F0-9]{64}$")
+    if valid_hash.match(m_hash) is not None:
+        try:
+            if int(shop_id):
+                raise ValueError
+        except ValueError:
+            return json.dumps({"status": "FAIL", "message": "shop_id should be a positive number"})
         db.save_tx(shop_id, m_hash)
-        return "OK"
+        return json.dumps({"status": "OK", "message": ""})
     else:
-        return ""
+        return json.dumps({"status": "FAIL", "message": "hash should have 16, 32 or 64 symbols"})
 
 
 @app.route("/get_block/")
 def get_block():
-    hash = request.args.get('hash', '')
-    block = db.get_block_by_tx_hash(hash)
-    if block is None:
-        return "No block"
-    return str(block)
+    m_hash = request.args.get('hash', '')
+    valid_hash = re.compile("^[A-F0-9]{16}$|^[A-F0-9]{32}$|^[A-F0-9]{64}$")
+    if valid_hash.match(m_hash) is not None:
+        block, date = db.get_block_by_tx_hash(m_hash)
+        if block is None:
+            return json.dumps({"status": "OK", "block": None, "date": None, "message": "hash not found"})
+        return json.dumps({"status": "OK", "block": block, "date": date, "message": ""})
+    else:
+        return json.dumps({"status": "FAIL", "message": "hash should have 16, 32 or 64 symbols"})

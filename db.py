@@ -207,8 +207,9 @@ def save_block(block_id, root_hash, blockchain_tx_hash, txs):
 
 def get_block_by_tx_hash(tx_hash):
     with closing(db.cursor()) as cursor:
-        __query = "SELECT {0} FROM {1} WHERE {2} = '{3}';".format(
+        __query = "SELECT {0}, {1} FROM {2} WHERE {3} = '{4}';".format(
             __block_id,
+            __date,
             __transactions,
             __hash,
             tx_hash
@@ -219,4 +220,4 @@ def get_block_by_tx_hash(tx_hash):
             return None
         if tx[0] is None:
             return None
-        return __get_block(tx[0])
+        return __get_block(tx[0]), tx[1]
