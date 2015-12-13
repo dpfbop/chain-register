@@ -24,10 +24,10 @@ class Server(object):
         def run_flask():
             # Thread with Flask
             self._app.debug = False  # Flask can't work in thread in debug mode
-            self._app.run(host='0.0.0.0')
+            self._app.run()
 
-        register_thread = Thread(target=run_register)
-        flask_thread = Thread(target=run_flask)
-        register_thread.start()
-        flask_thread.start()
+        #register_thread = Thread(target=run_register)
+        #flask_thread = Thread(target=run_flask)
+        #register_thread.start()
+        #flask_thread.start()
         return self._app
