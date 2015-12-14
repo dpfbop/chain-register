@@ -28,7 +28,7 @@ def register_purchase():
 @app.route("/get_block/")
 def get_block():
     m_hash = request.args.get('hash', '')
-    valid_hash = re.compile("^[A-F0-9]{16}$|^[A-F0-9]{32}$|^[A-F0-9]{64}$")
+    valid_hash = re.compile("^[a-fA-F0-9]{16}$|^[a-fA-F0-9]{32}$|^[a-fA-F0-9]{64}$")
     if valid_hash.match(m_hash) is not None:
         block, date = db.get_block_by_tx_hash(m_hash)
         if block is None:
