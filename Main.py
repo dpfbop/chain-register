@@ -35,5 +35,3 @@ def get_block():
         return jsonify({"status": "OK", "block": block, "date": str(date), "message": ""})
     else:
         return jsonify({"status": "FAIL", "message": "hash should have 16, 32 or 64 symbols"})
-
-app.run()
