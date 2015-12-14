@@ -217,7 +217,7 @@ def get_block_by_tx_hash(tx_hash):
         cursor.execute(__query)
         tx = cursor.fetchone()
         if tx is None:
-            return None
+            return None, None
         if tx[0] is None:
-            return None
+            return None, None
         return __get_block(tx[0]), tx[1]
