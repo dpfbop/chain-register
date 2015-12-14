@@ -15,7 +15,7 @@ def register_purchase():
     valid_hash = re.compile("^[A-F0-9]{16}$|^[A-F0-9]{32}$|^[A-F0-9]{64}$")
     if valid_hash.match(m_hash) is not None:
         try:
-            if int(shop_id):
+            if not int(shop_id):
                 raise ValueError
         except ValueError:
             return json.dumps({"status": "FAIL", "message": "shop_id should be a positive number"})
