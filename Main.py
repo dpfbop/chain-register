@@ -1,11 +1,10 @@
 #!/usr/bin/env python
-from flask import Flask, request
+from flask import Flask, request, jsonify
 import db
 import re
 import json
 
 app = Flask(__name__)
-
 
 # API calls
 @app.route("/register_purchase/")
@@ -32,7 +31,9 @@ def get_block():
     if valid_hash.match(m_hash) is not None:
         block, date = db.get_block_by_tx_hash(m_hash)
         if block is None:
-            return json.dumps({"status": "OK", "block": None, "date": None, "message": "hash not found"})
-        return json.dumps({"status": "OK", "block": block, "date": date, "message": ""})
+            return jsonify({"status": "OK", "block": None, "date": None, "message": "hash not found"})
+        return jsonify({"status": "OK", "block": block, "date": str(date), "message": ""})
     else:
-        return json.dumps({"status": "FAIL", "message": "hash should have 16, 32 or 64 symbols"})
+        return jsonify({"status": "FAIL", "message": "hash should have 16, 32 or 64 symbols"})
+
+app.run()
