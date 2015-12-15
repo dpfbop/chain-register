@@ -89,7 +89,6 @@ __settings = "settings"
 # Connect to db
 db = MySQLdb.connect(user=Configs.user, passwd=Configs.password)
 db.autocommit(True)
-db.query('SET GLOBAL wait_timeout=28800')
 # create tables if necessary
 __init_db()
 # init last block id from db
@@ -98,9 +97,14 @@ __last_block_id, __last_tx_id = __init_vars()
 
 def __get_block(block_id):
     with closing(db.cursor()) as cursor:
-        cursor.execute("SELECT " + __root_hash + "," +
-                       __blockchain_tx_hash + " FROM " + __blocks +
-                       " WHERE " + __block_id + " = " + str(block_id) + ";")
+        __query = "SELECT " + __root_hash + "," +\
+                           __blockchain_tx_hash + " FROM " + __blocks +\
+                           " WHERE " + __block_id + " = " + str(block_id) + ";"
+        try:
+            cursor.execute(__query)
+        except (AttributeError, MySQLdb.OperationalError):
+            db.connect(user=Configs.user, passwd=Configs.password)
+            cursor.execute(__query)
         result = cursor.fetchone()
         return {"root_hash": result[0], "blockchain_tx_hash": result[1]}
 
@@ -117,7 +121,11 @@ def __set_last_block_id(val):
             __settings_key,
             "last_block_id"
         )
-        cursor.execute(__query)
+        try:
+            cursor.execute(__query)
+        except (AttributeError, MySQLdb.OperationalError):
+            db.connect(user=Configs.user, passwd=Configs.password)
+            cursor.execute(__query)
         __last_block_id = val
 
 
@@ -126,13 +134,18 @@ def __set_last_tx_id(val):
         global __last_tx_id
         if val < __last_tx_id:
             raise ValueError("val should be more than" + str(__last_tx_id))
-        cursor.execute("UPDATE {} SET {} =  {} WHERE {} = '{}';".format(
-            __settings,
-            __settings_value,
-            val,
-            __settings_key,
-            "last_tx_id"
-        ))
+        __query = "UPDATE {} SET {} =  {} WHERE {} = '{}';".format(
+                __settings,
+                __settings_value,
+                val,
+                __settings_key,
+                "last_tx_id"
+            )
+        try:
+            cursor.execute(__query)
+        except (AttributeError, MySQLdb.OperationalError):
+            db.connect(user=Configs.user, passwd=Configs.password)
+            cursor.execute(__query)
         __last_tx_id = val
 
 
@@ -145,7 +158,11 @@ def save_tx(shop_id, _hash):
             str(shop_id),
             _hash
         )
-        cursor.execute(__query)
+        try:
+            cursor.execute(__query)
+        except (AttributeError, MySQLdb.OperationalError):
+            db.connect(user=Configs.user, passwd=Configs.password)
+            cursor.execute(__query)
 
 
 def test_save_txs(shop_ids, _hashes):
@@ -159,16 +176,25 @@ def test_save_txs(shop_ids, _hashes):
         for i in range(len(_hashes)):
             __query += str((shop_ids[i], _hashes[i])) + ", "
         __query = __query[:-2] + ";"
-        cursor.execute(__query)
+        try:
+            cursor.execute(__query)
+        except (AttributeError, MySQLdb.OperationalError):
+            db.connect(user=Configs.user, passwd=Configs.password)
+            cursor.execute(__query)
 
 
 def get_txs_for_new_block():
     with closing(db.cursor()) as cursor:
-        cursor.execute("SELECT id, {} FROM {} WHERE id > {} ;".format(
+        __query = "SELECT id, {} FROM {} WHERE id > {} ;".format(
             __hash,
             __transactions,
             __last_tx_id
-        ))
+        )
+        try:
+            cursor.execute(__query)
+        except (AttributeError, MySQLdb.OperationalError):
+            db.connect(user=Configs.user, passwd=Configs.password)
+            cursor.execute(__query)
         hashes = []
         t = cursor.fetchall()
         for row in t:
@@ -187,7 +213,11 @@ def save_block(block_id, root_hash, blockchain_tx_hash, txs):
             "id",
             txs[-1][0]
         )
-        cursor.execute(__query)
+        try:
+            cursor.execute(__query)
+        except (AttributeError, MySQLdb.OperationalError):
+            db.connect(user=Configs.user, passwd=Configs.password)
+            cursor.execute(__query)
         __set_last_block_id(block_id)
         __set_last_tx_id(txs[-1][0])
         __query = "INSERT INTO {} ({}, {}, {}) VALUES ({},'{}','{}');".format(
@@ -199,7 +229,11 @@ def save_block(block_id, root_hash, blockchain_tx_hash, txs):
             root_hash,
             blockchain_tx_hash
         )
-        cursor.execute(__query)
+        try:
+            cursor.execute(__query)
+        except (AttributeError, MySQLdb.OperationalError):
+            db.connect(user=Configs.user, passwd=Configs.password)
+            cursor.execute(__query)
 
 
 def get_block_by_tx_hash(tx_hash):
@@ -211,7 +245,11 @@ def get_block_by_tx_hash(tx_hash):
             __hash,
             tx_hash
         )
-        cursor.execute(__query)
+        try:
+            cursor.execute(__query)
+        except (AttributeError, MySQLdb.OperationalError):
+            db.connect(user=Configs.user, passwd=Configs.password)
+            cursor.execute(__query)
         tx = cursor.fetchall()
         blocks = []
         for row in tx:

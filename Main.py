@@ -5,7 +5,6 @@ import re
 import json
 
 app = Flask(__name__)
-app.debug = True
 
 
 # API calls
