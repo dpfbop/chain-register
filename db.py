@@ -5,11 +5,16 @@ from Configs import Configs
 
 def __init_vars():
     with closing(db.cursor()) as cursor:
-        cursor.execute("SELECT {}, {} FROM {} ;".format(
+        __query = "SELECT {}, {} FROM {} ;".format(
             __settings_key,
             __settings_value,
             __settings
-        ))
+        )
+        try:
+            cursor.execute(__query)
+        except (AttributeError, MySQLdb.OperationalError):
+            db.connect(user=Configs.user, passwd=Configs.password)
+            cursor.execute(__query)
         entry = []
         for row in cursor:
             entry.append(row[1])
@@ -25,20 +30,39 @@ def __init_db():
         __query = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '{}'".format(
             Configs.db_name
         )
-        cursor.execute(__query)
+        try:
+            cursor.execute(__query)
+        except (AttributeError, MySQLdb.OperationalError):
+            db.connect(user=Configs.user, passwd=Configs.password)
+            cursor.execute(__query)
         if cursor.fetchone()[0] == 0:
             # create database
             cursor.execute("CREATE DATABASE IF NOT EXISTS " + Configs.db_name)
         # select necessary database
-        cursor.execute("USE " + Configs.db_name)
+        __query = "USE " + Configs.db_name
+        try:
+            cursor.execute(__query)
+        except (AttributeError, MySQLdb.OperationalError):
+            db.connect(user=Configs.user, passwd=Configs.password)
+            cursor.execute(__query)
         # check if table already exists
         __query = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '{}' AND TABLE_NAME = '{}'".format(
             Configs.db_name,
             __transactions
         )
-        cursor.execute(__query)
+        try:
+            cursor.execute(__query)
+        except (AttributeError, MySQLdb.OperationalError):
+            db.connect(user=Configs.user, passwd=Configs.password)
+            cursor.execute(__query)
         if cursor.fetchone()[0] == 1:
-            cursor.execute("USE " + Configs.db_name)
+            __query = "USE " + Configs.db_name
+            cursor.execute(__query)
+            try:
+                cursor.execute(__query)
+            except (AttributeError, MySQLdb.OperationalError):
+                db.connect(user=Configs.user, passwd=Configs.password)
+                cursor.execute(__query)
             return
         # create table 'transactions'
         __query = "CREATE TABLE IF NOT EXISTS " + __transactions + "(" +\
@@ -50,14 +74,22 @@ def __init_db():
                   "PRIMARY KEY (id)," \
                   "INDEX (" + __block_id + ")," \
                   "INDEX (" + __hash + "(4)));"
-        cursor.execute(__query)
+        try:
+            cursor.execute(__query)
+        except (AttributeError, MySQLdb.OperationalError):
+            db.connect(user=Configs.user, passwd=Configs.password)
+            cursor.execute(__query)
         # create table 'blocks'
         __query = "CREATE TABLE IF NOT EXISTS " + __blocks + " (" +\
                   __block_id + " INT UNSIGNED, " +\
                   __root_hash + " CHAR(64), " +\
                   __blockchain_tx_hash + " CHAR(64), " \
                   "PRIMARY KEY (" + __block_id + "));"
-        cursor.execute(__query)
+        try:
+            cursor.execute(__query)
+        except (AttributeError, MySQLdb.OperationalError):
+            db.connect(user=Configs.user, passwd=Configs.password)
+            cursor.execute(__query)
         # create table 'settings'
         __query = "CREATE TABLE IF NOT EXISTS {} ({} CHAR(64), {} INT UNSIGNED, UNIQUE ({}));".format(
             __settings,
@@ -65,10 +97,23 @@ def __init_db():
             __settings_value,
             __settings_key
         )
-        cursor.execute(__query)
-        cursor.execute("INSERT IGNORE INTO {} VALUES ('last_block_id', 0);".format(__settings))
-        cursor.execute("INSERT IGNORE INTO {} VALUES ('last_tx_id', 0);".format(__settings))
-        db.commit()
+        try:
+            cursor.execute(__query)
+        except (AttributeError, MySQLdb.OperationalError):
+            db.connect(user=Configs.user, passwd=Configs.password)
+            cursor.execute(__query)
+        __query = "INSERT IGNORE INTO {} VALUES ('last_block_id', 0);".format(__settings)
+        try:
+            cursor.execute(__query)
+        except (AttributeError, MySQLdb.OperationalError):
+            db.connect(user=Configs.user, passwd=Configs.password)
+            cursor.execute(__query)
+        __query = "INSERT IGNORE INTO {} VALUES ('last_tx_id', 0);".format(__settings)
+        try:
+            cursor.execute(__query)
+        except (AttributeError, MySQLdb.OperationalError):
+            db.connect(user=Configs.user, passwd=Configs.password)
+            cursor.execute(__query)
     __last_block_id, __last_tx_id = __init_vars()
 
 
