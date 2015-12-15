@@ -88,6 +88,8 @@ __blocks = "blocks"
 __settings = "settings"
 # Connect to db
 db = MySQLdb.connect(user=Configs.user, passwd=Configs.password)
+db.autocommit(True)
+db.query('SET GLOBAL wait_timeout=28800')
 # create tables if necessary
 __init_db()
 # init last block id from db
@@ -117,7 +119,6 @@ def __set_last_block_id(val):
         )
         cursor.execute(__query)
         __last_block_id = val
-        db.commit()
 
 
 def __set_last_tx_id(val):
@@ -133,7 +134,6 @@ def __set_last_tx_id(val):
             "last_tx_id"
         ))
         __last_tx_id = val
-        db.commit()
 
 
 def save_tx(shop_id, _hash):
@@ -146,7 +146,6 @@ def save_tx(shop_id, _hash):
             _hash
         )
         cursor.execute(__query)
-        db.commit()
 
 
 def test_save_txs(shop_ids, _hashes):
@@ -161,7 +160,6 @@ def test_save_txs(shop_ids, _hashes):
             __query += str((shop_ids[i], _hashes[i])) + ", "
         __query = __query[:-2] + ";"
         cursor.execute(__query)
-        db.commit()
 
 
 def get_txs_for_new_block():
@@ -202,7 +200,6 @@ def save_block(block_id, root_hash, blockchain_tx_hash, txs):
             blockchain_tx_hash
         )
         cursor.execute(__query)
-        db.commit()
 
 
 def get_block_by_tx_hash(tx_hash):
@@ -215,9 +212,10 @@ def get_block_by_tx_hash(tx_hash):
             tx_hash
         )
         cursor.execute(__query)
-        tx = cursor.fetchone()
-        if tx is None:
-            return None, None
-        if tx[0] is None:
-            return None, None
-        return __get_block(tx[0]), tx[1]
+        tx = cursor.fetchall()
+        blocks = []
+        for row in tx:
+            if row is None or row[0] is None:
+                continue
+            blocks.append((__get_block(row[0]), row[1]))
+        return blocks

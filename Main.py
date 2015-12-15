@@ -5,6 +5,8 @@ import re
 import json
 
 app = Flask(__name__)
+app.debug = True
+
 
 # API calls
 @app.route("/register_purchase/")
@@ -29,9 +31,9 @@ def get_block():
     m_hash = request.args.get('hash', '')
     valid_hash = re.compile("^[a-fA-F0-9]{16}$|^[a-fA-F0-9]{32}$|^[a-fA-F0-9]{64}$")
     if valid_hash.match(m_hash) is not None:
-        block, date = db.get_block_by_tx_hash(m_hash)
-        if block is None:
+        blocks = db.get_block_by_tx_hash(m_hash)
+        if blocks is None or len(blocks) == 0:
             return jsonify({"status": "OK", "block": None, "date": None, "message": "hash not found"})
-        return jsonify({"status": "OK", "block": block, "date": str(date), "message": ""})
+        return jsonify({"status": "OK", "blocks": list([{"block": block[0], "date": block[1]} for block in blocks]), "message": ""})
     else:
         return jsonify({"status": "FAIL", "message": "hash should have 16, 32 or 64 symbols"})
