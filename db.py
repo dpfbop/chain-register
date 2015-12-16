@@ -4,6 +4,7 @@ from Configs import Configs
 
 
 def __init_vars():
+    global db
     with closing(db.cursor()) as cursor:
         __query = "SELECT {}, {} FROM {} ;".format(
             __settings_key,
@@ -13,8 +14,8 @@ def __init_vars():
         try:
             cursor.execute(__query)
         except (AttributeError, MySQLdb.OperationalError):
-            db.connect(user=Configs.user, passwd=Configs.password)
-            cursor.execute(__query)
+            db = MySQLdb.connect(user=Configs.user, passwd=Configs.password)
+            return __init_vars()
         entry = []
         for row in cursor:
             entry.append(row[1])
@@ -24,7 +25,7 @@ def __init_vars():
 
 
 def __init_db():
-    global __last_block_id, __last_tx_id
+    global __last_block_id, __last_tx_id, db
     with closing(db.cursor()) as cursor:
         # check if database already exists
         __query = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '{}'".format(
@@ -33,8 +34,8 @@ def __init_db():
         try:
             cursor.execute(__query)
         except (AttributeError, MySQLdb.OperationalError):
-            db.connect(user=Configs.user, passwd=Configs.password)
-            cursor.execute(__query)
+            db = MySQLdb.connect(user=Configs.user, passwd=Configs.password)
+            return __init_db()
         if cursor.fetchone()[0] == 0:
             # create database
             cursor.execute("CREATE DATABASE IF NOT EXISTS " + Configs.db_name)
@@ -43,9 +44,9 @@ def __init_db():
         try:
             cursor.execute(__query)
         except (AttributeError, MySQLdb.OperationalError):
-            db.connect(user=Configs.user, passwd=Configs.password)
-            cursor.execute(__query)
-        # check if table already exists
+            db = MySQLdb.connect(user=Configs.user, passwd=Configs.password)
+            return __init_db()
+        # check if table "transactions" already exists
         __query = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '{}' AND TABLE_NAME = '{}'".format(
             Configs.db_name,
             __transactions
@@ -53,67 +54,99 @@ def __init_db():
         try:
             cursor.execute(__query)
         except (AttributeError, MySQLdb.OperationalError):
-            db.connect(user=Configs.user, passwd=Configs.password)
-            cursor.execute(__query)
-        if cursor.fetchone()[0] == 1:
-            __query = "USE " + Configs.db_name
-            cursor.execute(__query)
+            db = MySQLdb.connect(user=Configs.user, passwd=Configs.password)
+            return __init_db()
+        if cursor.fetchone()[0] == 0:
+            # create table 'transactions'
+            __query = "CREATE TABLE IF NOT EXISTS " + __transactions + "(" +\
+                      "id INT UNSIGNED NOT NULL AUTO_INCREMENT, " +\
+                      __shop_id + " INT UNSIGNED, " +\
+                      __hash + " CHAR(64), " +\
+                      __block_id + " INT UNSIGNED, " +\
+                      __date + " TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +\
+                      "PRIMARY KEY (id)," \
+                      "INDEX (" + __block_id + ")," \
+                      "INDEX (" + __hash + "(4)));"
             try:
                 cursor.execute(__query)
             except (AttributeError, MySQLdb.OperationalError):
-                db.connect(user=Configs.user, passwd=Configs.password)
-                cursor.execute(__query)
-            return
-        # create table 'transactions'
-        __query = "CREATE TABLE IF NOT EXISTS " + __transactions + "(" +\
-                  "id INT UNSIGNED NOT NULL AUTO_INCREMENT, " +\
-                  __shop_id + " INT UNSIGNED, " +\
-                  __hash + " CHAR(64), " +\
-                  __block_id + " INT UNSIGNED, " +\
-                  __date + " TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " +\
-                  "PRIMARY KEY (id)," \
-                  "INDEX (" + __block_id + ")," \
-                  "INDEX (" + __hash + "(4)));"
-        try:
-            cursor.execute(__query)
-        except (AttributeError, MySQLdb.OperationalError):
-            db.connect(user=Configs.user, passwd=Configs.password)
-            cursor.execute(__query)
-        # create table 'blocks'
-        __query = "CREATE TABLE IF NOT EXISTS " + __blocks + " (" +\
-                  __block_id + " INT UNSIGNED, " +\
-                  __root_hash + " CHAR(64), " +\
-                  __blockchain_tx_hash + " CHAR(64), " \
-                  "PRIMARY KEY (" + __block_id + "));"
-        try:
-            cursor.execute(__query)
-        except (AttributeError, MySQLdb.OperationalError):
-            db.connect(user=Configs.user, passwd=Configs.password)
-            cursor.execute(__query)
-        # create table 'settings'
-        __query = "CREATE TABLE IF NOT EXISTS {} ({} CHAR(64), {} INT UNSIGNED, UNIQUE ({}));".format(
-            __settings,
-            __settings_key,
-            __settings_value,
-            __settings_key
+                db = MySQLdb.connect(user=Configs.user, passwd=Configs.password)
+                return __init_db()
+
+        # check if table "blocks" already exists
+        __query = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '{}' AND TABLE_NAME = '{}'".format(
+                   Configs.db_name,
+                   __blocks
         )
         try:
             cursor.execute(__query)
         except (AttributeError, MySQLdb.OperationalError):
-            db.connect(user=Configs.user, passwd=Configs.password)
-            cursor.execute(__query)
-        __query = "INSERT IGNORE INTO {} VALUES ('last_block_id', 0);".format(__settings)
+            db = MySQLdb.connect(user=Configs.user, passwd=Configs.password)
+            return __init_db()
+        if cursor.fetchone()[0] == 0:
+            # create table 'blocks'
+            __query = "CREATE TABLE IF NOT EXISTS " + __blocks + " (" +\
+                      __block_id + " INT UNSIGNED, " +\
+                      __root_hash + " CHAR(64), " +\
+                      __blockchain_tx_hash + " CHAR(64), " \
+                      "PRIMARY KEY (" + __block_id + "));"
+            try:
+                cursor.execute(__query)
+            except (AttributeError, MySQLdb.OperationalError):
+                db = MySQLdb.connect(user=Configs.user, passwd=Configs.password)
+                return __init_db()
+
+        # check if table "settings" already exists
+        __query = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '{}' AND TABLE_NAME = '{}'".format(
+                   Configs.db_name,
+                   __settings
+        )
         try:
             cursor.execute(__query)
         except (AttributeError, MySQLdb.OperationalError):
-            db.connect(user=Configs.user, passwd=Configs.password)
-            cursor.execute(__query)
-        __query = "INSERT IGNORE INTO {} VALUES ('last_tx_id', 0);".format(__settings)
-        try:
-            cursor.execute(__query)
-        except (AttributeError, MySQLdb.OperationalError):
-            db.connect(user=Configs.user, passwd=Configs.password)
-            cursor.execute(__query)
+            db = MySQLdb.connect(user=Configs.user, passwd=Configs.password)
+            return __init_db()
+        if cursor.fetchone()[0] == 0:
+            # create table 'settings'
+            __query = "CREATE TABLE IF NOT EXISTS {} ({} CHAR(64), {} INT UNSIGNED, UNIQUE ({}));".format(
+                __settings,
+                __settings_key,
+                __settings_value,
+                __settings_key
+            )
+            try:
+                cursor.execute(__query)
+            except (AttributeError, MySQLdb.OperationalError):
+                db = MySQLdb.connect(user=Configs.user, passwd=Configs.password)
+                return __init_db()
+        # check if last_block_id exists
+        __query = "SELECT {} FROM {} WHERE {} = 'last_block_id';".format(
+            __settings_key,
+            __settings,
+            __settings_key
+        )
+        cursor.execute(__query)
+        if cursor.fetchone() is None:
+            __query = "INSERT IGNORE INTO {} VALUES ('last_block_id', 0);".format(__settings)
+            try:
+                cursor.execute(__query)
+            except (AttributeError, MySQLdb.OperationalError):
+                db = MySQLdb.connect(user=Configs.user, passwd=Configs.password)
+                return __init_db()
+        # check if last_tx_id exists
+        __query = "SELECT {} FROM {} WHERE {} = 'last_tx_id';".format(
+            __settings_key,
+            __settings,
+            __settings_key
+        )
+        cursor.execute(__query)
+        if cursor.fetchone() is None:
+            __query = "INSERT IGNORE INTO {} VALUES ('last_tx_id', 0);".format(__settings)
+            try:
+                cursor.execute(__query)
+            except (AttributeError, MySQLdb.OperationalError):
+                db = MySQLdb.connect(user=Configs.user, passwd=Configs.password)
+                return __init_db()
     __last_block_id, __last_tx_id = __init_vars()
 
 
@@ -134,6 +167,7 @@ __settings = "settings"
 # Connect to db
 db = MySQLdb.connect(user=Configs.user, passwd=Configs.password)
 db.autocommit(True)
+db.query('SET GLOBAL wait_timeout=60')
 # create tables if necessary
 __init_db()
 # init last block id from db
@@ -141,6 +175,7 @@ __last_block_id, __last_tx_id = __init_vars()
 
 
 def __get_block(block_id):
+    global db
     with closing(db.cursor()) as cursor:
         __query = "SELECT " + __root_hash + "," +\
                            __blockchain_tx_hash + " FROM " + __blocks +\
@@ -148,13 +183,14 @@ def __get_block(block_id):
         try:
             cursor.execute(__query)
         except (AttributeError, MySQLdb.OperationalError):
-            db.connect(user=Configs.user, passwd=Configs.password)
-            cursor.execute(__query)
+            db = MySQLdb.connect(user=Configs.user, passwd=Configs.password)
+            return __get_block(block_id)
         result = cursor.fetchone()
         return {"root_hash": result[0], "blockchain_tx_hash": result[1]}
 
 
 def __set_last_block_id(val):
+    global db
     with closing(db.cursor()) as cursor:
         global __last_block_id
         if val < __last_block_id:
@@ -169,12 +205,13 @@ def __set_last_block_id(val):
         try:
             cursor.execute(__query)
         except (AttributeError, MySQLdb.OperationalError):
-            db.connect(user=Configs.user, passwd=Configs.password)
-            cursor.execute(__query)
+            db = MySQLdb.connect(user=Configs.user, passwd=Configs.password)
+            return __set_last_block_id(val)
         __last_block_id = val
 
 
 def __set_last_tx_id(val):
+    global db
     with closing(db.cursor()) as cursor:
         global __last_tx_id
         if val < __last_tx_id:
@@ -189,12 +226,13 @@ def __set_last_tx_id(val):
         try:
             cursor.execute(__query)
         except (AttributeError, MySQLdb.OperationalError):
-            db.connect(user=Configs.user, passwd=Configs.password)
-            cursor.execute(__query)
+            db = MySQLdb.connect(user=Configs.user, passwd=Configs.password)
+            return __set_last_tx_id(val)
         __last_tx_id = val
 
 
 def save_tx(shop_id, _hash):
+    global db
     with closing(db.cursor()) as cursor:
         __query = "INSERT INTO {} ({}, {}) VALUES ({}, '{}');".format(
             __transactions,
@@ -206,11 +244,12 @@ def save_tx(shop_id, _hash):
         try:
             cursor.execute(__query)
         except (AttributeError, MySQLdb.OperationalError):
-            db.connect(user=Configs.user, passwd=Configs.password)
-            cursor.execute(__query)
+            db = MySQLdb.connect(user=Configs.user, passwd=Configs.password)
+            return save_tx(shop_id, _hash)
 
 
 def test_save_txs(shop_ids, _hashes):
+    global db
     # function used only for tests
     with closing(db.cursor()) as cursor:
         __query = "INSERT INTO {} ({}, {}) VALUES ".format(
@@ -224,11 +263,12 @@ def test_save_txs(shop_ids, _hashes):
         try:
             cursor.execute(__query)
         except (AttributeError, MySQLdb.OperationalError):
-            db.connect(user=Configs.user, passwd=Configs.password)
-            cursor.execute(__query)
+            db = MySQLdb.connect(user=Configs.user, passwd=Configs.password)
+            return test_save_txs(shop_ids, _hashes)
 
 
 def get_txs_for_new_block():
+    global db
     with closing(db.cursor()) as cursor:
         __query = "SELECT id, {} FROM {} WHERE id > {} ;".format(
             __hash,
@@ -238,8 +278,8 @@ def get_txs_for_new_block():
         try:
             cursor.execute(__query)
         except (AttributeError, MySQLdb.OperationalError):
-            db.connect(user=Configs.user, passwd=Configs.password)
-            cursor.execute(__query)
+            db = MySQLdb.connect(user=Configs.user, passwd=Configs.password)
+            return get_txs_for_new_block()
         hashes = []
         t = cursor.fetchall()
         for row in t:
@@ -248,6 +288,7 @@ def get_txs_for_new_block():
 
 
 def save_block(block_id, root_hash, blockchain_tx_hash, txs):
+    global db
     with closing(db.cursor()) as cursor:
         __query = "UPDATE {} SET {} = {} WHERE {} >= {} AND {} <= {};".format(
             __transactions,
@@ -261,8 +302,8 @@ def save_block(block_id, root_hash, blockchain_tx_hash, txs):
         try:
             cursor.execute(__query)
         except (AttributeError, MySQLdb.OperationalError):
-            db.connect(user=Configs.user, passwd=Configs.password)
-            cursor.execute(__query)
+            db = MySQLdb.connect(user=Configs.user, passwd=Configs.password)
+            return save_block(block_id, root_hash, blockchain_tx_hash, txs)
         __set_last_block_id(block_id)
         __set_last_tx_id(txs[-1][0])
         __query = "INSERT INTO {} ({}, {}, {}) VALUES ({},'{}','{}');".format(
@@ -277,11 +318,12 @@ def save_block(block_id, root_hash, blockchain_tx_hash, txs):
         try:
             cursor.execute(__query)
         except (AttributeError, MySQLdb.OperationalError):
-            db.connect(user=Configs.user, passwd=Configs.password)
-            cursor.execute(__query)
+            db = MySQLdb.connect(user=Configs.user, passwd=Configs.password)
+            return save_block(block_id, root_hash, blockchain_tx_hash, txs)
 
 
 def get_block_by_tx_hash(tx_hash):
+    global db
     with closing(db.cursor()) as cursor:
         __query = "SELECT {0}, {1} FROM {2} WHERE {3} = '{4}';".format(
             __block_id,
@@ -293,8 +335,8 @@ def get_block_by_tx_hash(tx_hash):
         try:
             cursor.execute(__query)
         except (AttributeError, MySQLdb.OperationalError):
-            db.connect(user=Configs.user, passwd=Configs.password)
-            cursor.execute(__query)
+            db = MySQLdb.connect(user=Configs.user, passwd=Configs.password)
+            return get_block_by_tx_hash(tx_hash)
         tx = cursor.fetchall()
         blocks = []
         for row in tx:
