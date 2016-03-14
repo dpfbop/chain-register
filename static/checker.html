@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <title>Check hash</title>
+    <script src="sha256.js"></script>
+    <script src="http://code.jquery.com/jquery-1.12.0.min.js"></script>
+    <script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+</head>
+
+<body>
+<form>
+    Account Id:<br>
+    <input type="text" id="accountId"><br>
+    Invoice Number:<br>
+    <input type="text" id="invoiceNumber"> <br>
+    Amount: <br>
+    <input type="text" id="amount"> <br>
+    Invoice date: <br>
+    <input type="text" id="invoiceDate"> <br>
+    <input type="button" onclick="calc_hash()" value="Check hash">
+</form>
+<br>
+<div id="result"></div>
+<script>
+    function calc_hash() {
+        var accountId = $('#accountId').val();
+        var invoiceNumber = $('#invoiceNumber').val();
+        var amount = $('#amount').val();
+        var invoiceDate = $('#invoiceDate').val();
+        var params = new Array();
+        params["accountId"] = accountId;
+        params["invoiceNumber"] = invoiceNumber;
+        params["amount"] = (+amount).toFixed(2);
+        params["invoiceDate"] = invoiceDate;
+
+        var tuples = [];
+        for (var key in params) tuples.push([key, params[key]]);
+        tuples.sort(function(a, b) {
+            a = a[0];
+            b = b[0];
+            return a < b ? -1 : (a > b ? 1 : 0);
+        });
+
+        var str = "";
+        for (var i = 0; i < tuples.length; i++) {
+            var key = tuples[i][0];
+            var value = tuples[i][1];
+            str += key + "=" + value;
+            if (i < tuples.length - 1) {
+                str += "&";
+            }
+        }
+        $.get( "https://test:123@test-lucidcloud.usrsrc.ru/get_block/?hash=" + sha256(str), function( data ) {
+            $("#result").html("Status: " + data.status + "<br>" +
+                              "Message: " + data.message + "<br>" +
+                              "Blocks: " + JSON.stringify(data.blocks) + "<br>" +
+                              "Date: " + data.date);
+
+        });
+
+    }
+
+</script>
+
+</body>
+</html>
