@@ -1,6 +1,5 @@
-from flask import Flask
 from ChainRegister import ChainRegister
-from threading import Lock, Thread
+from threading import Lock
 import db
 
 
@@ -12,5 +11,5 @@ def run_register():
         print(txs_hashes)
         register.register_block(new_block_id, txs_hashes)
 
-if __name__=="__main__":
+if __name__ == "__main__":
     run_register()
