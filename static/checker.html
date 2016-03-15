@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Check hash</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
     <script src="sha256.js"></script>
-    <script src="http://code.jquery.com/jquery-1.12.0.min.js"></script>
-    <script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+    <script src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
+    <script src="https://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
 </head>
 
 <body>
@@ -28,7 +29,7 @@
         var invoiceNumber = $('#invoiceNumber').val();
         var amount = $('#amount').val();
         var invoiceDate = $('#invoiceDate').val();
-        var params = new Array();
+        var params = [];
         params["accountId"] = accountId;
         params["invoiceNumber"] = invoiceNumber;
         params["amount"] = (+amount).toFixed(2);
@@ -51,17 +52,29 @@
                 str += "&";
             }
         }
-        $.get( "https://test:123@test-lucidcloud.usrsrc.ru/get_block/?hash=" + sha256(str), function( data ) {
-            $("#result").html("Status: " + data.status + "<br>" +
-                              "Message: " + data.message + "<br>" +
-                              "Blocks: " + JSON.stringify(data.blocks) + "<br>" +
-                              "Date: " + data.date);
-
+        $.get( "get_block/?hash=" + sha256(str), function( data ) {
+            if (data.status == "OK") {
+                if (data.message == "hash not found") {
+                    $("#result").html("<b>Requested invoice not found.</b><br>");
+                    $("#result").append("Please check that you have entered the correct data. If invoice doesn't appear in one hour consider contacting company.");
+                } else {
+                    $("#result").html("<b>Requested invoice exists. You can trust the company!</b><br>");
+                    for (var i in data.blocks) {
+                        $("#result").append("<p style='border-style: groove'>" +
+                                " - Date: " +  data.blocks[i].date +
+                                "<br> - Id: " +  data.blocks[i].block.blockchain_tx_hash +
+                                "<br> - Root: " +  data.blocks[i].block.root_hash +
+                        "</p>");
+                    }
+                    $("#result").append("You can check transaction Id in one of the bitcoin block explorers to be sure that this transaction really exists.");
+                }
+            } else {
+                 $("#result").append("Something went wrong. Please try again later.")
+            }
         });
 
     }
 
 </script>
-
 </body>
 </html>

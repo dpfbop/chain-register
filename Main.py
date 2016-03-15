@@ -36,3 +36,21 @@ def get_block():
         return jsonify({"status": "OK", "blocks": list([{"block": block[0], "date": block[1]} for block in blocks]), "message": ""})
     else:
         return jsonify({"status": "FAIL", "message": "hash should have 16, 32 or 64 symbols"})
+
+
+@app.route("/check")
+def check():
+    return app.send_static_file("checker.html")
+#
+#
+# @app.route("/sha256.js")
+# def sha256():
+#     return app.send_static_file("sha256.js")
+#
+#
+# @app.route("/styles.css")
+# def styles():
+#     return app.send_static_file("styles.css")
+
+if __name__ == "__main__":
+    app.run()
